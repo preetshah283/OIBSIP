@@ -21,7 +21,6 @@ engine.setProperty("voice",voices[1].id)
 
 #---------------------------------------------------------------------------SAYING THE TEXT(USER SPOKEN OR ENTERED)
 def talk(text):
-    text = text + ", What can I do for you?"
     print(text)
     engine.say(text)
     engine.runAndWait()
@@ -29,13 +28,13 @@ def talk(text):
 #---------------------------------------------------------------------------GREETING BASED ON TIME
 def greetings():
     if greet >= 5 and greet < 12:
-        talk("Good morning!")
+        talk("Good morning!, what can I do for you?")
     elif greet>=12 and greet<17:
-        talk("Good Afternoon!")
+        talk("Good Afternoon!, what can I do for you?")
     elif greet>=17 and greet<24:
-        talk("Good Evening!")
+        talk("Good Evening!, what can I do for you?")
     elif greet>=0 and greet<5:
-        talk("You should go to sleep.. But")
+        talk("You should go to sleep.. But, what can I do for you?")
 # greetings()
 
 #---------------------------------------------------------------------------SPEECH RECOGNISATION
@@ -67,4 +66,3 @@ greet = time.hour
 date = datetime.now().date().strftime("%d/%m/%Y") #to change the date format
 # print(date)
 
-# query = listen().lower()
