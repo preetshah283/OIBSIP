@@ -10,6 +10,7 @@
 import pyttsx3
 from datetime import datetime
 import speech_recognition as sr
+import wikipedia as wiki
 
 #---------------------------------------------------------------------------ENGINE INIT
 engine = pyttsx3.init() #init the speech recognition engine
@@ -26,7 +27,7 @@ def talk(text):
     engine.runAndWait()
 
 #---------------------------------------------------------------------------GREETING BASED ON TIME
-def greetings():
+def greetings(greet):
     if greet >= 5 and greet < 12:
         talk("Good morning!, what can I do for you?")
     elif greet>=12 and greet<17:
@@ -35,7 +36,6 @@ def greetings():
         talk("Good Evening!, what can I do for you?")
     elif greet>=0 and greet<5:
         talk("You should go to sleep.. But, what can I do for you?")
-# greetings()
 
 #---------------------------------------------------------------------------SPEECH RECOGNISATION
 def listen():
@@ -59,10 +59,32 @@ def listen():
 
     return text
 
+#---------------------------------------------------------------------------VARIABLES FOR ANSWERING
 time = datetime.now().time()
-# print(time)
-greet = time.hour
-# listen()
 date = datetime.now().date().strftime("%d/%m/%Y") #to change the date format
-# print(date)
 
+#---------------------------------------------------------------------------RESPONSES ACCORDING TO QUERIES
+greetings(time.hour)
+query = listen().lower()
+
+if "time" in query:
+    text = time
+    talk(text)
+if "date" in query:
+    text = date
+    talk(text)
+if "wikipedia" in query or "about" in query or "search" in query:  # tell me about Python from wikipedia
+        query = query.replace("wikipedia", "")
+        if "from" in query:
+            query = query.replace("from", "")
+        if "tell me":
+            query = query.replace("tell me", "")
+        if "something":
+            query = query.replace("something", "")
+        if "about":
+            query = query.replace("about", "")
+        if "search":
+            query = query.replace("search","")
+        # print("Query =", query)
+        response = wiki.summary(query, sentences=2)
+        talk(response)
