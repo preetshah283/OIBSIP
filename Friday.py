@@ -6,11 +6,22 @@
 3. Time, date.
 4. Searching the web for user queries.
 '''
+'''
+#advanced
+1. Advanced voice assistant with natural language processing capabilities. 
+2. Sending emails
+3. Setting reminders
+4. Providing weather updates
+5. Controlling smart home devices
+6. Answering general knowledge questions
+7. Integrating with third-party APIs for more functionality.
+'''
 
 import pyttsx3
 from datetime import datetime
 import speech_recognition as sr
 import wikipedia as wiki
+import smtplib
 
 #---------------------------------------------------------------------------ENGINE INIT
 engine = pyttsx3.init() #init the speech recognition engine
@@ -25,6 +36,11 @@ def talk(text):
     print(text)
     engine.say(text)
     engine.runAndWait()
+
+#---------------------------------------------------------------------------TAKING WRITTEN INPUT
+def take_written_input(message):        #! Takes written input from user 
+    talk(message)
+    return input("Type your answer here ----> ").lower()
 
 #---------------------------------------------------------------------------GREETING BASED ON TIME
 def greetings(greet):
@@ -59,6 +75,25 @@ def listen():
 
     return text
 
+#--------------------------------------------------------------------------- SENDING EMAILS
+def send_email(subject,receivers_email,body):
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 587
+    sender_email = 'shahpreet2803@gmail.com' 
+    sender_password = 'iefk jalo vkic gixg'  #app specific password used
+    # subject = this.subject
+    # receivers_email = "d36191973@gmail.com"  #dummy email address
+    # body = "generated email"
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            msg = f'Subject: {subject}\n\n{body}'
+            server.sendmail(sender_email, receivers_email, msg)
+            print(f"Email sent to {receivers_email}")
+    except Exception as e:
+        print(f"Error sending email to {receivers_email}: {str(e)}")
+
 #---------------------------------------------------------------------------VARIABLES FOR ANSWERING
 time = datetime.now().time()
 date = datetime.now().date().strftime("%d/%m/%Y") #to change the date format
@@ -67,13 +102,15 @@ date = datetime.now().date().strftime("%d/%m/%Y") #to change the date format
 greetings(time.hour)
 query = listen().lower()
 
-if "time" in query:
+if "time" in query: #tell me the time
     text = time
     talk(text)
-if "date" in query:
+
+if "date" in query: #tell me the date
     text = date
     talk(text)
-if "wikipedia" in query or "about" in query or "search" in query:  # tell me about Python from wikipedia
+
+if "wikipedia" in query or "about" in query or "search" in query or "tell" in query:  # tell me about Python from wikipedia
         query = query.replace("wikipedia", "")
         if "from" in query:
             query = query.replace("from", "")
@@ -88,3 +125,13 @@ if "wikipedia" in query or "about" in query or "search" in query:  # tell me abo
         # print("Query =", query)
         response = wiki.summary(query, sentences=2)
         talk(response)
+
+if "email" in query:
+    talk("Speak in the following format: ")
+    talk("Speak subject: ")
+    subject = listen()
+    talk("Written input activated.. ")
+    receivers_email = take_written_input("Type email of receiver: ")
+    talk("Speak email body: ")
+    body = listen()
+    send_email(subject,receivers_email,body)
