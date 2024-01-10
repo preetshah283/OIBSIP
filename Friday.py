@@ -24,6 +24,10 @@ import wikipedia as wiki
 import smtplib
 import openai
 import requests
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 
 #---------------------------------------------------------------------------ENGINE INIT
 engine = pyttsx3.init() #init the speech recognition engine
@@ -110,7 +114,7 @@ def send_email(subject,receivers_email,body):
 #---------------------------------------------------------------------------WEATHER UPDATES
 def weather_update(place):
     params = {
-    'access_key': 'faf99aea12ce51a2194c4c1add5145e5',
+    'access_key': os.getenv('WEATHER_STACK_API'),
     'query': place
     }
 
@@ -180,9 +184,17 @@ while True:
         send_email(subject,receivers_email,body)
 
     if "weather" in query:
-        place = query.split("for")[1]
+        if query.find("in")>0:   
+            place = query.split("in")[1]
+        elif query.find("for")>0:
+            place = query.split("for")[1]
+        elif query.find("of")>0:
+            place = query.split("of")[1]
+        elif query.find("at")>0:
+            place = query.split("at")[1]
+        elif query.find("'s")>0:
+            place = query.split("'s")[0]
         weather_update(place)
 
     if "bye" in query or "goodbye" in query or "see you" in query:
         talk("Good bye..!!")
-        break
