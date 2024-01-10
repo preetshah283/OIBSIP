@@ -22,6 +22,8 @@ from datetime import datetime
 import speech_recognition as sr
 import wikipedia as wiki
 import smtplib
+import openai
+import requests
 
 #---------------------------------------------------------------------------ENGINE INIT
 engine = pyttsx3.init() #init the speech recognition engine
@@ -75,6 +77,17 @@ def listen():
 
     return text
 
+#---------------------------------------------------------------------------CHATGPT API
+def generate_response(prompt):   
+    #send the prompt to chatgpt and generate the reply
+    message = prompt
+    if message:
+        chat = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo"
+        )
+    return chat.choices[0].message.content
+    # print(f"chatgpt: {reply}")
+    
 #--------------------------------------------------------------------------- SENDING EMAILS
 def send_email(subject,receivers_email,body):
     smtp_server = 'smtp.gmail.com'
@@ -94,44 +107,82 @@ def send_email(subject,receivers_email,body):
     except Exception as e:
         print(f"Error sending email to {receivers_email}: {str(e)}")
 
+#---------------------------------------------------------------------------WEATHER UPDATES
+def weather_update(place):
+    params = {
+    'access_key': 'faf99aea12ce51a2194c4c1add5145e5',
+    'query': place
+    }
+
+    api_result = requests.get('https://api.weatherstack.com/current', params)
+
+    api_response = api_result.json()
+
+    talk(u'Current temperature in %s is %d℃' % (api_response['location']['name'], api_response['current']['temperature']))
+
 #---------------------------------------------------------------------------VARIABLES FOR ANSWERING
 time = datetime.now().time()
 date = datetime.now().date().strftime("%d/%m/%Y") #to change the date format
 
 #---------------------------------------------------------------------------RESPONSES ACCORDING TO QUERIES
 greetings(time.hour)
-query = listen().lower()
 
-if "time" in query: #tell me the time
-    text = time
-    talk(text)
+while True:
+    query = listen().lower()
 
-if "date" in query: #tell me the date
-    text = date
-    talk(text)
+    if "time" in query: #tell me the time
+        text = time
+        talk(text)
 
-if "wikipedia" in query or "about" in query or "search" in query or "tell" in query:  # tell me about Python from wikipedia
-        query = query.replace("wikipedia", "")
-        if "from" in query:
-            query = query.replace("from", "")
-        if "tell me":
+    if "date" in query: #tell me the date
+        text = date
+        talk(text)
+
+    if "wikipedia" in query:  # tell me about Python from wikipedia
+            query = query.replace("wikipedia", "")
+            if "from" in query:
+                query = query.replace("from", "")
+            if "tell me" in query:
+                query = query.replace("tell me", "")
+            if "something" in query:
+                query = query.replace("something", "")
+            if "about" in query:
+                query = query.replace("about", "")
+            if "search" in query:
+                query = query.replace("search","")
+            # print("Query =", query)
+            response = wiki.summary(query, sentences=2)
+            talk(response)
+    else:
+        if "tell me" in query:
             query = query.replace("tell me", "")
-        if "something":
+        if "something" in query:
             query = query.replace("something", "")
-        if "about":
+        if "about" in query:
             query = query.replace("about", "")
-        if "search":
+        if "search" in query:
             query = query.replace("search","")
-        # print("Query =", query)
-        response = wiki.summary(query, sentences=2)
-        talk(response)
+        talk(generate_response(query))
 
-if "email" in query:
-    talk("Speak in the following format: ")
-    talk("Speak subject: ")
-    subject = listen()
-    talk("Written input activated.. ")
-    receivers_email = take_written_input("Type email of receiver: ")
-    talk("Speak email body: ")
-    body = listen()
-    send_email(subject,receivers_email,body)
+    if "email" in query:
+        talk("Speak in the following format: ")
+        talk("Speak subject: ")
+        subject = listen()
+        talk("Speak email of receiver: ")
+        receivers_email = listen()
+        talk(f"Did you say {receivers_email} ?")
+        confirmation = listen()
+        if confirmation != "ok" or confirmation != "yes":
+            talk("Written input activated.. ")
+            receivers_email = take_written_input("Type email of receiver: ")
+        talk("Speak email body: ")
+        body = listen()
+        send_email(subject,receivers_email,body)
+
+    if "weather" in query:
+        place = query.split("for")[1]
+        weather_update(place)
+
+    if "bye" in query or "goodbye" in query or "see you" in query:
+        talk("Good bye..!!")
+        break
