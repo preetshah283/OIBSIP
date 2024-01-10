@@ -198,3 +198,4 @@ while True:
 
     if "bye" in query or "goodbye" in query or "see you" in query:
         talk("Good bye..!!")
+        
