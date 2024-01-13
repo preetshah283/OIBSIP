@@ -1,22 +1,4 @@
 
-'''
-# beginner
-1. Respond to "hello".
-2. Provide predefined responses(mrng,evng,aftnn).
-3. Time, date.
-4. Searching the web for user queries.
-'''
-'''
-#advanced
-1. Advanced voice assistant with natural language processing capabilities. 
-2. Sending emails
-3. Setting reminders
-4. Providing weather updates
-5. Controlling smart home devices
-6. Answering general knowledge questions
-7. Integrating with third-party APIs for more functionality.
-'''
-
 import pyttsx3
 from datetime import datetime
 import speech_recognition as sr
