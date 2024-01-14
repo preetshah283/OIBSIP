@@ -4,9 +4,10 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
 def get_weather(city):
     api_key = os.getenv('OPEN_WEATHER_MAP_API')
-    base_url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&rootid={api_key}&units=metric"
+    base_url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
 
     try:
         response = requests.get(base_url)
@@ -48,12 +49,16 @@ root.geometry("700x400")
 root.title("Weather Check")
 
 city_text = StringVar()
-city_entry = Entry(root, textvariable = city_text).pack()
+city_entry = Entry(root, textvariable=city_text)
+city_entry.pack()
 
-search_button = Button(root, text = "Search Weather", command = search).pack()
+search_button = Button(root, text="Search Weather", command=search)
+search_button.pack()
 
-infolabel = Label(root, font = ("comicsansms 15 italics")).pack()
+infolabel = Label(root, font=("comicsansms", 15, "italic"))
+infolabel.pack()
 
-datalabel = Label(root, font = ("comicsansms 15")).pack()
+datalabel = Label(root, font=("comicsansms", 15))
+datalabel.pack()
 
 root.mainloop()

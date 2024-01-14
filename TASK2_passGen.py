@@ -65,27 +65,28 @@ Label(root, text="Select specifications", font="comicsansms 15 italic").grid(col
 
 complexity_var = StringVar(value="medium")
 list_complexity = ["high","medium","low"]
-Label(root, text="Complexity/Security", font="comicsansms 10").grid(column=1)
+Label(root, text="Complexity/Security", font="comicsansms 10").grid(row=1, column=0, sticky=W)
 
-for i in list_complexity:
-    radio = Radiobutton(root, text=i, variable=complexity_var, value=i, justify="left").grid(column=1,padx=10)
+for i, complexity in enumerate(list_complexity):
+    radio = Radiobutton(root, text=complexity, variable=complexity_var, value=complexity, justify="left")
+    radio.grid(row=1, column=i+1, padx=10)
 
 letters_var = IntVar()
 numbers_var = IntVar()
 special_var = IntVar()
 list_char = [("letters", letters_var), ("numbers", numbers_var), ("special characters", special_var)]
 
-Label(root, text="Characters", font="comicsansms 10").grid(row=2,column=2)
-i=3
-for ch, var in list_char:
-    check = Checkbutton(root, text=ch, variable=var, justify="left").grid(row=i,column=2,padx=10)
-    i+=1
+Label(root, text="Characters", font="comicsansms 10").grid(row=2, column=2, sticky=W)
+for i, (ch, var) in enumerate(list_char):
+    check = Checkbutton(root, text=ch, variable=var, justify="left")
+    check.grid(row=i+3, column=2, padx=10)
 
 length_var = IntVar(value=8)
-Label(root, text="Minimum length of password").grid(row=2,column=3,sticky=NE)
-l = Entry(root,textvariable=length_var,width=5).grid(row=2,column=4,sticky=NE)
+Label(root, text="Minimum length of password").grid(row=2, column=3, sticky=E)
+length_entry = Entry(root, textvariable=length_var, width=5)
+length_entry.grid(row=2, column=4, sticky=E)
 
 selected = dict()
-Button(root,text="Generate Password",command=generate_pwd).grid(columnspan=4,pady=20)
+Button(root, text="Generate Password", command=generate_pwd).grid(columnspan=4, pady=20)
 
 root.mainloop()

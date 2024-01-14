@@ -1,4 +1,3 @@
-
 import pyttsx3
 from datetime import datetime
 import speech_recognition as sr
@@ -10,7 +9,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-
+openai.api_key = os.getenv('OPENAI_API_KEY')
 #---------------------------------------------------------------------------ENGINE INIT
 engine = pyttsx3.init() #init the speech recognition engine
 engine.setProperty("rate",180) #set the speech rate to 180 wpm
@@ -42,11 +41,16 @@ def greetings(greet):
         talk("You should go to sleep.. But, what can I do for you?")
 
 #---------------------------------------------------------------------------SPEECH RECOGNISATION
-def listen():
+def listen(timeout_duration=500, phrase_limit=10):
     r = sr.Recognizer()
     with sr.Microphone() as source:
         print("Listening...")
-        audio = r.listen(source)
+        try:
+            audio = r.listen(source, timeout=timeout_duration, phrase_time_limit=phrase_limit)
+        except sr.WaitTimeoutError:
+            print("Listening timed out while waiting for phrase to start")
+            return ""
+
 
     # recognize speech using Google Speech Recognition
     try:
@@ -64,25 +68,31 @@ def listen():
     return text
 
 #---------------------------------------------------------------------------CHATGPT API
-def generate_response(prompt):   
-    #send the prompt to chatgpt and generate the reply
-    message = prompt
-    if message:
+def generate_response(prompt):
+    chat = None  # Initialize chat to None
+    try:
+        if not openai.api_key:
+            raise ValueError("The OpenAI API key has not been set.")
         chat = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo"
+            model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": "You are a helpful assistant."},
+                      {"role": "user", "content": prompt}]
         )
-    return chat.choices[0].message.content
-    # print(f"chatgpt: {reply}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    if chat is not None:
+        return chat.choices[0].message.content
+    else:
+        return "I'm sorry, I couldn't generate a response."
     
 #--------------------------------------------------------------------------- SENDING EMAILS
 def send_email(subject,receivers_email,body):
     smtp_server = 'smtp.gmail.com'
     smtp_port = 587
-    sender_email = 'shahpreet2803@gmail.com' 
-    sender_password = 'iefk jalo vkic gixg'  #app specific password used
-    # subject = this.subject
-    # receivers_email = "d36191973@gmail.com"  #dummy email address
-    # body = "generated email"
+    sender_email = os.getenv('EMAIL') 
+    sender_password = os.getenv('APP_SPECIFIC_PASSWORD')  #app specific password used
+
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
@@ -96,15 +106,24 @@ def send_email(subject,receivers_email,body):
 #---------------------------------------------------------------------------WEATHER UPDATES
 def weather_update(place):
     params = {
-    'access_key': os.getenv('WEATHER_STACK_API'),
-    'query': place
-    }
+            'access_key': os.getenv('WEATHER_STACK_API'),
+            'query': place
+        }
 
-    api_result = requests.get('https://api.weatherstack.com/current', params)
-
-    api_response = api_result.json()
-
-    talk(u'Current temperature in %s is %d℃' % (api_response['location']['name'], api_response['current']['temperature']))
+    try:
+        api_result = requests.get('https://api.weatherstack.com/current', params)
+        if api_result.status_code == 200:
+            api_response = api_result.json()
+            if 'current' in api_response and 'temperature' in api_response['current']:
+                temperature = api_response['current']['temperature']
+                location_name = api_response['location']['name']
+                talk("Current temperature in {} is {}℃".format(location_name, temperature))
+            else:
+                talk("I'm sorry, I couldn't fetch the weather for you. Please try again later.")
+        else:
+            talk("I'm sorry, there was a problem retrieving the weather information.")
+    except requests.RequestException as e:
+        talk("I'm sorry, I couldn't fetch the weather due to a network problem.")
 
 #---------------------------------------------------------------------------VARIABLES FOR ANSWERING
 time = datetime.now().time()
@@ -114,41 +133,34 @@ date = datetime.now().date().strftime("%d/%m/%Y") #to change the date format
 greetings(time.hour)
 
 while True:
+    current_time = datetime.now().time().strftime("%I:%M %p")
+    current_date = datetime.now().date().strftime("%d/%m/%Y")
     query = listen().lower()
 
-    if "time" in query: #tell me the time
-        text = time
-        talk(text)
+    if not query:  # If the query is empty, skip this iteration
+        continue
 
-    if "date" in query: #tell me the date
-        text = date
-        talk(text)
+    if "time" in query:
+        talk(current_time)
+
+    if "date" in query:
+        talk(current_date)
 
     if "wikipedia" in query:  # tell me about Python from wikipedia
-            query = query.replace("wikipedia", "")
-            if "from" in query:
-                query = query.replace("from", "")
-            if "tell me" in query:
-                query = query.replace("tell me", "")
-            if "something" in query:
-                query = query.replace("something", "")
-            if "about" in query:
-                query = query.replace("about", "")
-            if "search" in query:
-                query = query.replace("search","")
-            # print("Query =", query)
+        # Process the query to remove unnecessary words
+        for word in ["wikipedia", "from", "tell me", "something", "about", "search"]:
+            query = query.replace(word, "")
+        try:
             response = wiki.summary(query, sentences=2)
             talk(response)
+        except wiki.exceptions.DisambiguationError as e:
+            talk("There are multiple entries for this term. Please be more specific.")
+        except wiki.exceptions.PageError:
+            talk("I couldn't find any information on that topic.")
     else:
-        if "tell me" in query:
-            query = query.replace("tell me", "")
-        if "something" in query:
-            query = query.replace("something", "")
-        if "about" in query:
-            query = query.replace("about", "")
-        if "search" in query:
-            query = query.replace("search","")
-        talk(generate_response(query))
+        # For other queries, call generate_response
+        response = generate_response(query)
+        talk(response)
 
     if "email" in query:
         talk("Speak in the following format: ")
@@ -156,9 +168,9 @@ while True:
         subject = listen()
         talk("Speak email of receiver: ")
         receivers_email = listen()
-        talk(f"Did you say {receivers_email} ?")
+        talk(f"Did you say {receivers_email} ? Please reply as yes or no.")
         confirmation = listen()
-        if confirmation != "ok" or confirmation != "yes":
+        if "ok" in confirmation or "yes" in confirmation:
             talk("Written input activated.. ")
             receivers_email = take_written_input("Type email of receiver: ")
         talk("Speak email body: ")
@@ -178,6 +190,7 @@ while True:
             place = query.split("'s")[0]
         weather_update(place)
 
-    if "bye" in query or "goodbye" in query or "see you" in query:
+    elif "bye" in query or "goodbye" in query or "see you" in query:
         talk("Good bye..!!")
+        exit(0)
         
