@@ -140,12 +140,6 @@ while True:
     if not query:  # If the query is empty, skip this iteration
         continue
 
-    if "time" in query:
-        talk(current_time)
-
-    if "date" in query:
-        talk(current_date)
-
     if "wikipedia" in query:  # tell me about Python from wikipedia
         # Process the query to remove unnecessary words
         for word in ["wikipedia", "from", "tell me", "something", "about", "search"]:
@@ -157,10 +151,16 @@ while True:
             talk("There are multiple entries for this term. Please be more specific.")
         except wiki.exceptions.PageError:
             talk("I couldn't find any information on that topic.")
-    else:
+    if any(keyword in query.lower() for keyword in ["what", "when", "where", "who", "which", "why", "how"]):
         # For other queries, call generate_response
         response = generate_response(query)
         talk(response)
+
+    if "time" in query:
+        talk(current_time)
+
+    if "date" in query:
+        talk(current_date)
 
     if "email" in query:
         talk("Speak in the following format: ")
